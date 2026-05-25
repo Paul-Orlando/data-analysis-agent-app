@@ -82,8 +82,9 @@ export function ChartBuilder({ chartAggregations }: Props) {
   const renderChart = () => {
     const isCurrency = isCurrencyCol(yCol)
     const axisFormatter = isCurrency ? fmtAxis : undefined
-    const tooltipFormatter = isCurrency
-      ? (value: number) => [fmtTooltip(value), yCol]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tooltipFormatter: any = isCurrency
+      ? (value: unknown) => [fmtTooltip(Number(value ?? 0)), yCol]
       : undefined
 
     if (chartType === "bar") {
