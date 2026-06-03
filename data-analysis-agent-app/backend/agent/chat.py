@@ -1,10 +1,15 @@
-import json
+﻿import json
 import os
 import re
 import pandas as pd
 from openai import OpenAI
 
-client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+client = OpenAI(
+    api_key=os.environ["OPENROUTER_API_KEY"],
+    base_url="https://openrouter.ai/api/v1",
+)
+
+MODEL_NAME = os.environ.get("MODEL_NAME", "google/gemini-2.5-flash")
 
 EXPERTISE_INSTRUCTIONS = {
     "beginner": "The user is a beginner. Use simple language, define technical terms, avoid heavy math, and explain every finding clearly.",
@@ -16,18 +21,18 @@ CHAT_SYSTEM_PROMPT = """You are an expert data analyst assistant. You have acces
 
 When answering:
 - Base your answers on the actual data columns and statistics provided
-- Be specific — reference real column names and values
+- Be specific - reference real column names and values
 - When a chart would help (or the user asks for one), include a CHART_SPEC_JSON line at the very end of your response
 
 Chart spec format (use ONLY when a chart is appropriate):
 CHART_SPEC_JSON: {"type":"bar|line|scatter|histogram|pie","title":"...","x_col":"...","y_col":"...","aggregation":"none|sum|mean|count","takeaway":"1-2 sentence insight about the chart"}
 
 Chart selection rules:
-- Categorical comparisons → bar
-- Time series / trends → line
-- Numeric vs numeric → scatter
-- Single column distribution → histogram
-- Proportions (≤5 categories) → pie, otherwise bar
+- Categorical comparisons -> bar
+- Time series / trends -> line
+- Numeric vs numeric -> scatter
+- Single column distribution -> histogram
+- Proportions (<=5 categories) -> pie, otherwise bar
 
 Only output CHART_SPEC_JSON when a chart genuinely adds value. Never output it for purely textual answers.
 """
@@ -47,7 +52,6 @@ def _build_chart_data(df: pd.DataFrame, spec: dict) -> dict | None:
             if x_col not in df.select_dtypes(include="number").columns:
                 return None
             series = df[x_col].dropna()
-            counts, edges = pd.cut(series, bins=20, retbins=True)
             hist_data = (
                 series.groupby(pd.cut(series, bins=20))
                 .count()
@@ -135,7 +139,7 @@ def reply(
     messages.append({"role": "user", "content": message})
 
     response = client.chat.completions.create(
-        model="gpt-4o",
+        model=MODEL_NAME,
         messages=messages,
         temperature=0.3,
     )

@@ -1,10 +1,15 @@
-import json
+﻿import json
 import os
 import re
 from openai import OpenAI
 from agent.agent_instructions_v8_1 import SYSTEM_PROMPT
 
-client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+client = OpenAI(
+    api_key=os.environ["OPENROUTER_API_KEY"],
+    base_url="https://openrouter.ai/api/v1",
+)
+
+MODEL_NAME = os.environ.get("MODEL_NAME", "google/gemini-2.5-flash")
 
 EXPERTISE_ADDENDUM = {
     "beginner": "The user is a beginner. Use simple language, define all technical terms, avoid math notation, and explain every finding clearly.",
@@ -28,7 +33,7 @@ def analyze(summary: dict, mode: str, expertise_level: str = "expert") -> tuple[
     )
 
     response = client.chat.completions.create(
-        model="gpt-4o",
+        model=MODEL_NAME,
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": user_message},
